@@ -16,7 +16,7 @@ def plot_curveII(y1, y2, ttl=None, savepth=None):
     plt.plot(y1, "o-", linewidth=1, label="train")
     plt.plot(y2, "o-", linewidth=1, label="test")
     plt.xlabel("epoch")
-    plt.legend(loc="upper right")
+    plt.legend()
     if ttl:
         plt.title(ttl)
     if savepth:
