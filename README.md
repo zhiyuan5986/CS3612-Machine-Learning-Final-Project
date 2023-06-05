@@ -1,7 +1,7 @@
-# CS3612-02 Final Project
+# CS3612-01 Final Project
 
 ## Overview
-In this project, I finished the Mandatory Task: Fashion-MNIST clothing classification with a Neural Network built by myself, and finished Optional task 2: Visualization methods to explain DNNs. 
+In this project, I finished the Mandatory Task: Fashion-MNIST clothing classification with a Neural Network built by myself, and finished Optional task 2: Visualization methods to explain DNNs (for simplicity, I call this task as task 3). 
 
 ## Task1: Fashion-MNIST clothing classification
 For task 1, you can see all my codes in directory `Task1`. 
