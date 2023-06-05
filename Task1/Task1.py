@@ -109,7 +109,7 @@ def test_loop(model, test_loader, loss_fn, device, test_loss_list, test_acc_list
 def parse_args():
     """parse arguments. You can add other arguments if needed."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--is_train", type=bool, default=True,
+    parser.add_argument("--is_train", type=int, default=1,
         help="flag to decide whether to train")
     parser.add_argument("--epochs", type=int, default=50,
         help="training epochs")
@@ -128,23 +128,24 @@ if __name__ == "__main__":
         os.mkdir("./output")
     if not os.path.exists("./checkpoints"):
         os.mkdir("./checkpoints")
-    version = "v2"
+    version = "v1"
     output_root = f"./output/{version}"
+    if not os.path.exists(output_root):
+        os.mkdir(output_root)
     torch.manual_seed(args.seed)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    trans = transforms.Compose([
+        transforms.Grayscale(num_output_channels=1),
+        transforms.Resize(32),
+        transforms.ToTensor()
+    ])
 
-    if args.is_train:
+    if args.is_train or not os.path.exists(f"./checkpoints/{version}.pt"):
         model = NN(num_classes=10)
         model = model.to(device)
 
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
-
-        trans = transforms.Compose([
-            transforms.Grayscale(num_output_channels=1),
-            transforms.Resize(32),
-            transforms.ToTensor()
-        ])
 
         train_dataset = datasets.FashionMNIST(root='./dataset', train=True,
                                             transform=trans, download=True)
@@ -172,21 +173,48 @@ if __name__ == "__main__":
     else:
         model = NN(num_classes=10)
         model.load_state_dict(torch.load(f"./checkpoints/{version}.pt"))
+        model.eval()
 
+        test_dataset = datasets.FashionMNIST(root='./dataset', train=False,
+                                            transform=trans, download=True)
         test_loader_no_shuffle = DataLoader(dataset=test_dataset,
                                 batch_size=args.batch_size, shuffle=False)
-        features = []
-        model.eval()
+        conv_features = []
+        relu_features = []
+        final_features = []
+        def conv_hook_forward(module, fea_in, fea_out):
+            conv_features.append(nn.Flatten()(fea_out))
+            return None
+        def relu_hook_forward(module, fea_in, fea_out):
+            relu_features.append(nn.Flatten()(fea_out))
+            return None
+
+        h_conv = model.block3[6].register_forward_hook(hook=conv_hook_forward)
+        h_relu = model.block3[8].register_forward_hook(hook=relu_hook_forward)
+
         with torch.no_grad():
             for x,y in test_loader_no_shuffle:
-                x, y = x.to(device), y.to(device)
                 logits, pred = model.forward(x)
-                features.append(logits.cpu())
+                final_features.append(logits)
 
-        tsne = TSNE()
-        tsne.fit(torch.cat(features, dim = 0).numpy())
-        tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/tSNE.pdf")
-
+        conv_features = torch.cat(conv_features, dim = 0).numpy()
+        relu_features = torch.cat(relu_features, dim = 0).numpy()
+        final_features = torch.cat(final_features, dim = 0).numpy()
+        
         pca = PCA()
-        pca.fit(torch.cat(features, dim = 0).numpy())
-        pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/PCA.pdf")
+        tsne = tSNE()
+
+        # pca.fit(conv_features)
+        # pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_PCA.pdf")
+        # pca.fit(relu_features)
+        # pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_PCA.pdf")
+        pca.fit(final_features)
+        pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/final_PCA.pdf")
+        
+        # tsne.fit(conv_features)
+        # tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_tSNE.pdf")
+        # tsne.fit(relu_features)
+        # tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_tSNE.pdf")
+        tsne.fit(final_features, pca.pca_results, speed='fast')
+        tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/final_tSNE.pdf")
+
