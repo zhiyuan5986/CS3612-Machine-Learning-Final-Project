@@ -109,7 +109,7 @@ def test_loop(model, test_loader, loss_fn, device, test_loss_list, test_acc_list
 def parse_args():
     """parse arguments. You can add other arguments if needed."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--is_train", type=int, default=1,
+    parser.add_argument("--train", action="store_true",
         help="flag to decide whether to train")
     parser.add_argument("--epochs", type=int, default=50,
         help="training epochs")
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         transforms.ToTensor()
     ])
 
-    if args.is_train or not os.path.exists(f"./checkpoints/{version}.pt"):
+    if args.train or not os.path.exists(f"./checkpoints/{version}.pt"):
         model = NN(num_classes=10)
         model = model.to(device)
 
@@ -204,17 +204,21 @@ if __name__ == "__main__":
         pca = PCA()
         tsne = tSNE()
 
-        # pca.fit(conv_features)
-        # pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_PCA.pdf")
-        # pca.fit(relu_features)
-        # pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_PCA.pdf")
+        # Last conv layer
+        pca.fit(conv_features)
+        pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_PCA.pdf")
+        tsne.fit(conv_features, pca.pca_results, speed='fast') # Directly use sklearn.manifold.TSNE, if you want to test my codes, specifying `speed='naive'`
+        tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_tSNE.pdf")
+        
+        # Last RELU layer
+        pca.fit(relu_features)
+        pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_PCA.pdf")
+        tsne.fit(relu_features, pca.pca_results, speed='fast') # Directly use sklearn.manifold.TSNE, if you want to test my codes, specifying `speed='naive'`
+        tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_tSNE.pdf")
+
+        # Final layer
         pca.fit(final_features)
         pca.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/final_PCA.pdf")
-        
-        # tsne.fit(conv_features)
-        # tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/conv_tSNE.pdf")
-        # tsne.fit(relu_features)
-        # tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/relu_tSNE.pdf")
-        tsne.fit(final_features, pca.pca_results, speed='fast')
+        tsne.fit(final_features, pca.pca_results, speed='fast') # Directly use sklearn.manifold.TSNE, if you want to test my codes, specifying `speed='naive'`
         tsne.visualization(np.array([label for _, label in test_dataset]), savepth=f"{output_root}/final_tSNE.pdf")
 

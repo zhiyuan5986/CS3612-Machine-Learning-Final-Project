@@ -60,68 +60,19 @@ class IntegratedGradients():
         for i in range(num_steps+1):
             gradients.append(get_gradients(path_inputs[i,:].unsqueeze(0)))
         gradients = torch.concat(gradients, dim=0)
-        # print(gradients.shape)
 
         integrated_gradients = ((gradients + gradient_baseline) / 2) * (inputs - baseline)
-        # print(integrated_gradients[:1])
 
-        # return torch.sum(integrated_gradients, dim=(1, 2, 3))
         self.integrated_gradients = torch.sum(integrated_gradients, dim=0)
 
-    # def visualize(self):
-    #     # Convert the image and integrated gradients to numpy arrays
-    #     image_np = self.image.permute(1,2,0).detach().cpu().numpy().copy()
-    #     integrated_gradients = self.integrated_gradients.detach().cpu().numpy()
-
-    #     # Compute the absolute values of the integrated gradients
-    #     # print(np.linalg.norm(integrated_gradients))
-    #     integrated_gradients /= np.linalg.norm(integrated_gradients)
-    #     magnitudes = np.abs(integrated_gradients.mean(axis=0))
-    #     # print(integrated_gradients)
-
-    #     max_magnitude = magnitudes.max()
-    #     # Compute a threshold for small magnitudes
-    #     threshold = 0.1 * max_magnitude
-
-    #     # Create a mask for small magnitudes
-    #     mask = magnitudes < threshold
-    #     # print(mask.shape)
-    #     # print(mask)
-        
-    #     # image = image.transpose(1,2,0)
-
-    #     # overlay_np = image_np.copy()
-    #     # overlay_np[mask] = 0
-    #     # overlay_np /= overlay_np.max()
-
-    #     plt.clf()
-    #     plt.axis('off')
-    #     plt.imshow(image_np)
-    #     plt.title("Original Image")
-    #     plt.savefig(f"./output/Task3_6/original_image.png", bbox_inches="tight")
-    #     image_np[mask] = 0
-    #     plt.clf()
-    #     plt.axis('off')
-    #     plt.imshow(image_np)
-    #     plt.title(f"Label={self.label}")
-    #     plt.savefig(f"./output/Task3_6/{self.model_name}_label{self.label}.png", bbox_inches="tight")
-
     def visualize(self):
-        # print(torch.norm(integrated_gradients))
-        # Convert the image and integrated gradients to numpy arrays
-        # image_np = image.detach().cpu().numpy()
         image_np = self.image.permute(1,2,0).detach().cpu().numpy()
         integrated_gradients = self.integrated_gradients.detach().cpu().numpy()
-
-        # Compute the absolute values of the integrated gradients
-        # print(np.linalg.norm(integrated_gradients))
         integrated_gradients /= np.linalg.norm(integrated_gradients)
         magnitudes = np.abs(integrated_gradients)
-        # print(integrated_gradients)
-
         max_magnitude = magnitudes.max()
-        # Compute a threshold for small magnitudes
         magnitudes /= max_magnitude
+
         plt.clf()
         plt.axis('off')
         plt.imshow(image_np)

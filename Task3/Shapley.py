@@ -22,11 +22,6 @@ class Shapley():
     
     def fit(self, image_path = "./dataset/cat_dog.jpg", output_labels = [242, 282]):
         image = Image.open(image_path)
-
-        # trans = transforms.Compose([
-        #     transforms.Resize((224, 224)),
-        #     transforms.ToTensor()
-        # ])
         image = transforms.Resize((224, 224))(image)
 
         if self.useGradients:
@@ -41,29 +36,18 @@ class Shapley():
                 return torch.tensor(image.swapaxes(-1, 1).swapaxes(2, 3)).float()
             image = np.array(image).astype(np.float32)[np.newaxis, :] / 255
             self.image = image
-            # print(image)
 
-            # image = normalize(image)
-            # print(image)
             e = None
             if self.model_name == "resnet34":
                 e = shap.GradientExplainer((self.model, self.model.layer1[1].conv2), normalize(image))
             else:
                 e = shap.GradientExplainer((self.model, self.model.features[7]), normalize(image))
-            # shap_values,indexes = e.shap_values(normalize(image), nsamples=200, output_rank_order = "max", ranked_outputs = [242, 282])
             shap_values,indexes = e.shap_values(normalize(image), ranked_outputs=2, nsamples=200)
 
             self.shap_values = [np.swapaxes(np.swapaxes(s, 2, 3), 1, -1) for s in shap_values]
             self.class_labels = np.arange(0, 1000)[indexes]
         else:
             image = np.array(image).astype(np.float32)
-            # image = image / 255
-
-            # cat_dog = image.permute(1,2,0).numpy().astype(np.float32) # shape(224, 224, 3)
-
-            # logits = self.model.forward(torch.from_numpy(cat_dog[np.newaxis, :]).permute(0,3,1,2).type(torch.float).to(self.device)).cpu().detach().numpy().astype(np.float32)
-            # pred = logits.argmax(axis=1)
-
             masker = shap.maskers.Image("inpaint_telea", image.shape)
 
             def f(x):
@@ -94,12 +78,3 @@ if __name__ == "__main__":
             shapley = Shapley(model=model_name, useGradients=useGradients)
             shapley.fit(image_path="./dataset/cat_dog.jpg", output_labels=[242, 282])
             shapley.visualize()
-    # # ResNet34
-    # shapley = Shapley(torch.device('cuda' if torch.cuda.is_available() else 'cpu'), model="resnet34")
-    # shapley.fit(image_path="./dataset/cat_dog.jpg", output_labels=[242, 282])
-    # shapley.visualize()
-
-    # # VGG-16
-    # shapley = Shapley(torch.device('cuda' if torch.cuda.is_available() else 'cpu'), model="vgg16")
-    # shapley.fit(image_path="./dataset/cat_dog.jpg", output_labels=[242, 282])
-    # shapley.visualize()

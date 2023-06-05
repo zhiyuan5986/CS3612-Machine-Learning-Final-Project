@@ -36,7 +36,6 @@ cycler=0.11.0=pyhd3eb1b0_0
 dbus=1.13.18=hb2f20db_0
 debugpy=1.5.1=py39h295c915_0
 decorator=5.1.1=pyhd3eb1b0_0
-dgl-cuda11.3=0.9.1post1=py39_0
 executing=0.8.3=pyhd3eb1b0_0
 expat=2.4.9=h6a678d5_0
 ffmpeg=5.1.2=lgpl_hd27bd3a_6

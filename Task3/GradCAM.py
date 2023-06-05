@@ -67,7 +67,6 @@ class GradCAM():
         self.L = L
 
     def visualize(self):
-        # plt.matshow(self.L.detach().cpu())
 
         fig, ax = plt.subplots()
         ax.axis('off')
